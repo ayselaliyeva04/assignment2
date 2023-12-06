@@ -5,8 +5,8 @@ import java.sql.Connection;
 public class Main {
     public static void main(String[] args) {
         BookStore BookStore=new BookStore();
-        //BookStore.connectToBookStore("assignment2", "madinarustamova", "Medine2233!");
-        Connection conn=BookStore.connectToBookStore("assignment2", "madinarustamova", "Medine2233!");
+        //BookStore.connectToBookStore("assignment2", "ayselaliyeva", "Aysel123");
+        Connection conn=BookStore.connectToBookStore("assignment2", "ayselaliyeva", "Aysel123");
 
         //BookStore.createBook(conn, "5", "Harry Potter and the Sorcerer''s Stone", "1", "1984", "50", "1");
         //BookStore.readBooks(conn,"");
