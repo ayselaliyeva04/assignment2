@@ -189,7 +189,7 @@ public class BookStore {
         }
 
         public static void main(String[] args) {
-            Connection connection = connectToBookStore("assignement2", "madinarustamova", "Medine2233!");
+            Connection connection = connectToBookStore("assignement2", "ayselaliyeva", "Aysel123");
             Primary_Key(connection);
             Foreign_Key(connection);
         }
