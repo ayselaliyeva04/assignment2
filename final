@@ -1,0 +1,197 @@
+package org.example;
+
+import java.sql.*;
+
+public class BookStore {
+        public static Connection connectToBookStore(String dbName, String username, String password) {
+            Connection conn = null;
+            try {
+                Class.forName("org.postgresql.Driver");
+                conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/" + dbName, username, password);
+                if (conn != null) {
+                    System.out.println("Connection Established");
+                } else {
+                    System.out.println("Connection Failed");
+                }
+            } catch (Exception e) {
+                System.out.println(e);
+            }
+            return conn;
+        }
+
+        public void createBook(Connection conn,String book_id, String title, String genre, String publishDate, String stockQuantity, String authorId) {
+            Statement statement;
+            try {
+                String formattedDate = (publishDate.isEmpty()) ? "null" : String.format("'%s'", publishDate);
+                String query = String.format("INSERT INTO Books (book_id, title, genre, publish_date, stock_quantity, author_id) " +
+                        "VALUES(%s,'%s', '%s', %s, %s, %s)", book_id, title, genre, publishDate
+                        , stockQuantity, authorId);
+                statement = conn.createStatement();
+                statement.executeUpdate(query);
+                System.out.println("Book Inserted");
+            } catch (SQLException sqlException) {
+                sqlException.printStackTrace();
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
+        }
+
+
+        public void readBooks(Connection connection) {
+            Statement statement;
+            ResultSet rs;
+            try {
+                String query = "SELECT * FROM Books";
+                statement = connection.createStatement();
+                rs = statement.executeQuery(query);
+                while (rs.next()) {
+                    System.out.print(rs.getString("book_id") + " ");
+                    System.out.print(rs.getString("title") + " ");
+                    System.out.print(rs.getString("genre") + " ");
+                    System.out.print(rs.getString("publish_date") + " ");
+                    System.out.print(rs.getString("stock_quantity") + " ");
+                    System.out.println(rs.getString("author_id") + " ");
+                }
+            } catch (SQLException sqlException) {
+                sqlException.printStackTrace();
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
+        }
+
+        public void updateBookStock(Connection conn, int bookId, int newStockQuantity) {
+            Statement statement;
+            try {
+                String query = String.format("UPDATE Books SET stock_quantity = %d WHERE book_id = %d", newStockQuantity, bookId);
+                statement = conn.createStatement();
+                statement.executeUpdate(query);
+                System.out.println("Book Stock Updated");
+            } catch (SQLException sqlException) {
+                sqlException.printStackTrace();
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
+        }
+
+        public void deleteBook(Connection conn, int bookId) {
+            Statement statement;
+            try {
+                String query = String.format("DELETE FROM Books WHERE book_id = %d", bookId);
+                statement = conn.createStatement();
+                statement.executeUpdate(query);
+                System.out.println("Book Deleted");
+            } catch (SQLException sqlException) {
+                sqlException.printStackTrace();
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
+        }
+
+        public void createOrder(Connection conn, int customerId, int bookId, int quantity) {
+            Statement statement;
+            try {
+                String query = String.format("INSERT INTO Orders (customer_id, order_date) VALUES (%d, CURRENT_DATE) RETURNING order_id", customerId);
+                statement = conn.createStatement();
+                ResultSet rs = statement.executeQuery(query);
+
+                if (rs.next()) {
+                    int orderId = rs.getInt("order_id");
+
+                    query = String.format("INSERT INTO BooksInOrders (order_id, book_id, quantity) VALUES (%d, %d, %d)", orderId, bookId, quantity);
+                    statement.executeUpdate(query);
+
+                    System.out.println("Order Placed");
+                } else {
+                    System.out.println("Failed to create order");
+                }
+            } catch (SQLException sqlException) {
+                sqlException.printStackTrace();
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
+        }
+
+        public static void Table_Detail(Connection connection) {
+            try {
+                DatabaseMetaData MD = connection.getMetaData();
+                ResultSet resultSet = MD.getTables(null, null, null, new String[]{"TABLE"});
+                while (resultSet.next()) {
+                    String tableName = resultSet.getString("TABLE_NAME");
+                    System.out.println("Table: " + tableName);
+                    ResultSet columns = MD.getColumns(null, null, tableName, null);
+                    System.out.println("Columns: ");
+                    while (columns.next()) {
+                        String column_name = columns.getString("COLUMN_NAME");
+                        String data_type = columns.getString("TYPE_NAME");
+                        int size = columns.getInt("COLUMN_SIZE");
+                        System.out.println("Name: " + column_name + ", Data Type: " + data_type + ", Size: " + size);
+                    }
+                    columns.close();
+                }
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
+        }
+
+        public static void Column_Detail(Connection connection) {
+            try {
+                DatabaseMetaData MD = connection.getMetaData();
+                ResultSet table = MD.getTables(null, null, null, new String[]{"TABLE"});
+                while (table.next()) {
+                    String tableName = table.getString("TABLE_NAME");
+                    System.out.println("Table: " + tableName);
+                    ResultSet resultSet = MD.getColumns(null, null, tableName, null);
+                    while (resultSet.next()) {
+                        System.out.println("Name: " + resultSet.getString("COLUMN_NAME") + ", Data Type: " + resultSet.getString("TYPE_NAME"));
+                    }
+                }
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
+        }
+
+        public static void Primary_Key(Connection connection) {
+            try {
+                DatabaseMetaData metaData = connection.getMetaData();
+                ResultSet resultSet = metaData.getTables(null, null, null, new String[]{"TABLE"});
+                while (resultSet.next()) {
+                    String tableName = resultSet.getString("TABLE_NAME");
+                    System.out.println("Table: " + tableName);
+                    ResultSet primary_keys = metaData.getPrimaryKeys(null, null, tableName);
+                    while (primary_keys.next()) {
+                        String columnName = primary_keys.getString("COLUMN_NAME");
+                        System.out.println("  Primary Key Column: " + columnName);
+                    }
+                }
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
+        }
+
+        public static void Foreign_Key(Connection connection) {
+            try {
+                DatabaseMetaData MD = connection.getMetaData();
+                ResultSet resultSet = MD.getTables(null, null, null, new String[]{"TABLE"});
+                while (resultSet.next()) {
+                    String tableName = resultSet.getString("TABLE_NAME");
+                    System.out.println("Table: " + tableName);
+                    ResultSet foreignKeys = MD.getImportedKeys(null, null, tableName);
+                    while (foreignKeys.next()) {
+                        String column_name = foreignKeys.getString("FKCOLUMN_NAME");
+                        String reference_table = foreignKeys.getString("PKTABLE_NAME");
+                        String reference_column = foreignKeys.getString("PKCOLUMN_NAME");
+                        System.out.println("Foreign Key: " + column_name + ", Table: " + reference_table + ", Column: " + reference_column);
+                    }
+                }
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
+        }
+
+        public static void main(String[] args) {
+            Connection connection = connectToBookStore("assignement2", "madinarustamova", "Medine2233!");
+            Primary_Key(connection);
+            Foreign_Key(connection);
+        }
+    }
+
